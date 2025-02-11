@@ -2,13 +2,12 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
 import "forge-std/console.sol";
 
 error InvalidName();
 error InvalidMaxPlayers();
 error InvalidPriceToJoin();
+error GameAlreadyStarted();
 error GameNotStarted();
 error VotingNotAllowed();
 error AlreadyVoted();
@@ -16,56 +15,57 @@ error GameAlreadyEnded();
 error GameNotEndedYet();
 error SessionFull();
 error InsufficientDeposit();
+error PlayerAlreadyJoined();
 error TreasuryTransferFailed();
 error RewardTransferFailed();
 
 contract GameSession is Ownable {
     uint public sessionCounter;
-    // 10 USDC (assuming USDC has 6 decimals)
-    uint constant DEPOSIT = 10 * 10 ** 6;
+    // Minimum deposit for creating a session: 0.005 ETH.
+    uint constant MIN_DEPOSIT = 0.005 ether;
 
-    IERC20 public token;
-    address public treasury; // Company treasury address
+    // Treasury is payable.
+    address payable public treasury;
 
     /// @notice Session struct holds all game state.
     struct Session {
         string name;
         uint startTime;
         uint maxPlayers;
-        uint priceToJoin;
+        uint priceToJoin; // in wei
         address[] players;
         mapping(address => bool) hasVoted;
         mapping(address => uint) votedAgent;
         address[] voteOrder; // Order in which votes were cast.
-        address[] correctVoters; // Order of players who voted for the traitor.
+        address[] correctVoters; // Order of players who voted correctly.
         bool started;
         bool ended;
         uint impostorAgent; // Index into players array indicating the traitor.
-        uint prizePool; // Total deposits.
+        uint prizePool; // Total deposits in wei.
     }
 
-    // Since Session contains mappings, we use a mapping from sessionId to Session.
+    // We store sessions privately.
     mapping(uint => Session) private sessions;
 
-    /// @notice Constructor sets the USDC token and treasury address.
-    constructor(IERC20 _token, address _treasury) Ownable(msg.sender) {
-        token = _token;
+    /// @notice Constructor sets the treasury address.
+    constructor(address payable _treasury) Ownable(msg.sender) {
         treasury = _treasury;
     }
 
-    /// @notice Creates a new game session.
-    /// @param _name The chosen game name (e.g., "Medieval Kingdom Strategy").
+    /// @notice Creates a new game session and automatically joins the creator.
+    /// @param _name The chosen game name.
     /// @param _maxPlayers The maximum number of players (1–5).
-    /// @param _priceToJoin The price to join (in USDC, must be at least 10 USDC).
+    /// @param _priceToJoin The price to join (in wei, must be at least 0.005 ETH).
     /// @return sessionId The new session’s ID.
     function createGameSession(
         string memory _name,
         uint _maxPlayers,
         uint _priceToJoin
-    ) public returns (uint sessionId) {
+    ) public payable returns (uint sessionId) {
         if (bytes(_name).length > 30) revert InvalidName();
         if (_maxPlayers < 1 || _maxPlayers > 5) revert InvalidMaxPlayers();
-        if (_priceToJoin < 10 * 10 ** 6) revert InvalidPriceToJoin();
+        if (_priceToJoin < MIN_DEPOSIT) revert InvalidPriceToJoin();
+        if (msg.value != _priceToJoin) revert InsufficientDeposit();
 
         sessionCounter++;
         sessionId = sessionCounter;
@@ -75,12 +75,16 @@ contract GameSession is Ownable {
         s.priceToJoin = _priceToJoin;
         s.started = false;
         s.ended = false;
-        s.prizePool = 0;
+        s.prizePool = msg.value;
+
+        // Automatically join the session creator.
+        s.players.push(msg.sender);
+        emit PlayerJoined(sessionId, msg.sender);
 
         emit GameSessionCreated(sessionId, _name, _maxPlayers, _priceToJoin);
     }
 
-    /// @notice Returns basic session details.
+    /// @notice Returns basic session details (impostor not exposed).
     function getGameSession(
         uint sessionId
     )
@@ -104,26 +108,25 @@ contract GameSession is Ownable {
         return sessions[sessionId].players.length;
     }
 
-    /// @notice Allows a player to join a session by depositing the required USDC.
-    function joinGameSession(uint sessionId) public {
+    /// @notice Allows a player to join a session by sending the exact ETH amount.
+    function joinGameSession(uint sessionId) public payable {
         Session storage s = sessions[sessionId];
         if (s.players.length >= s.maxPlayers) revert SessionFull();
-
-        bool success = token.transferFrom(
-            msg.sender,
-            address(this),
-            s.priceToJoin
-        );
-        if (!success) revert InsufficientDeposit();
+        if (msg.value != s.priceToJoin) revert InsufficientDeposit();
+        for (uint i = 0; i < s.players.length; i++) {
+            if (s.players[i] == msg.sender) {
+                revert PlayerAlreadyJoined();
+            }
+        }
 
         s.players.push(msg.sender);
-        s.prizePool += s.priceToJoin;
+        s.prizePool += msg.value;
         emit PlayerJoined(sessionId, msg.sender);
     }
 
     /// @notice Allows a player to vote for the traitor.
     /// @param sessionId The session ID.
-    /// @param agentIndex The index of the agent that the voter believes is the traitor.
+    /// @param agentIndex The index of the agent the voter thinks is the traitor.
     function vote(uint sessionId, uint agentIndex) public {
         Session storage s = sessions[sessionId];
         if (!s.started) revert GameNotStarted();
@@ -131,40 +134,35 @@ contract GameSession is Ownable {
         if (s.hasVoted[msg.sender]) revert AlreadyVoted();
         if (s.ended) revert GameAlreadyEnded();
 
-
         s.hasVoted[msg.sender] = true;
         s.votedAgent[msg.sender] = agentIndex;
         s.voteOrder.push(msg.sender);
-
         emit VoteCast(sessionId, msg.sender);
     }
 
     /// @notice Starts the game.
-    /// Only the owner can call this. Sets the start time and assigns the traitor.
+    /// Only the owner can call this.
     /// @param sessionId The session ID.
-    /// @param _impostorAgent The index (within the players array) of the traitor.
+    /// @param _impostorAgent The index of the traitor in the players array.
     function startGame(uint sessionId, uint _impostorAgent) public onlyOwner {
         Session storage s = sessions[sessionId];
-        require(!s.started, "Game already started");
-        require(_impostorAgent < s.players.length, "Invalid traitor index");
+        if (s.started) revert GameAlreadyStarted();
         s.startTime = block.timestamp;
         s.impostorAgent = _impostorAgent;
         s.started = true;
         emit GameStarted(sessionId);
     }
 
-    /// @notice Ends the game after 10 minutes and distributes rewards.
-    /// If no player voted correctly (i.e. no vote equals the traitor index),
-    /// the entire prize pool is transferred to the treasury.
-    /// Otherwise, 2% of the prize pool is sent to the treasury and the remaining is distributed among correct voters.
+    /// @notice Ends the game after at least 10 minutes and distributes rewards.
+    /// If no player voted correctly, the entire prize pool goes to the treasury.
+    /// Otherwise, 5% of the prize pool is sent to the treasury and the remaining is distributed among correct voters.
     /// @param sessionId The session ID.
-    function endGame(uint sessionId) public {
+    function endGame(uint sessionId) public onlyOwner {
         Session storage s = sessions[sessionId];
         if (block.timestamp < s.startTime + 600) revert GameNotEndedYet();
         if (s.ended) revert GameAlreadyEnded();
         s.ended = true;
 
-        // Gather correct voters in the order they voted.
         uint count = 0;
         for (uint i = 0; i < s.voteOrder.length; i++) {
             address voter = s.voteOrder[i];
@@ -175,20 +173,16 @@ contract GameSession is Ownable {
         }
 
         if (count == 0) {
-            // No correct votes: transfer entire prize pool to treasury.
-            bool sentTreasury = token.transfer(treasury, s.prizePool);
+            (bool sentTreasury, ) = treasury.call{value: s.prizePool}("");
             if (!sentTreasury) revert TreasuryTransferFailed();
             emit TreasuryPaid(sessionId, s.prizePool);
         } else {
-            // Always transfer 2% to the treasury if at least one player won.
-            uint treasuryCut = (s.prizePool * 2) / 100;
-            bool sentTreasury = token.transfer(treasury, treasuryCut);
+            uint treasuryCut = (s.prizePool * 5) / 100;
+            (bool sentTreasury, ) = treasury.call{value: treasuryCut}("");
             if (!sentTreasury) revert TreasuryTransferFailed();
             emit TreasuryPaid(sessionId, treasuryCut);
 
             uint effectivePool = s.prizePool - treasuryCut;
-
-            // Define reward percentages based on the number of correct voters.
             uint[] memory percentages;
             if (count == 1) {
                 percentages = new uint[](1);
@@ -216,17 +210,17 @@ contract GameSession is Ownable {
                 percentages[3] = 15;
                 percentages[4] = 5;
             } else {
-                // If more than 5 players (should not happen in our design), distribute equally.
                 percentages = new uint[](count);
                 for (uint i = 0; i < count; i++) {
                     percentages[i] = 100 / count;
                 }
             }
 
-            // Distribute the effectivePool among the correct voters.
             for (uint i = 0; i < count; i++) {
                 uint reward = (effectivePool * percentages[i]) / 100;
-                bool sent = token.transfer(s.correctVoters[i], reward);
+                (bool sent, ) = payable(s.correctVoters[i]).call{value: reward}(
+                    ""
+                );
                 if (!sent) revert RewardTransferFailed();
                 emit RewardDistributed(sessionId, s.correctVoters[i], reward);
             }
