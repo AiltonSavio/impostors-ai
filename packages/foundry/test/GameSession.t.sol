@@ -49,7 +49,10 @@ contract GameSessionTest is Test {
             uint priceToJoin,
             bool started,
             bool ended,
-            address[] memory players
+            address[] memory players,
+            uint impostorAgent,
+            address[] memory correctVoters,
+            uint prizePool
         ) = game.getGameSession(sessionId);
         assertEq(name, "Test Game");
         assertEq(maxPlayers, 5);
@@ -58,6 +61,9 @@ contract GameSessionTest is Test {
         assertFalse(ended);
         // Creator automatically joined.
         assertEq(players.length, 1);
+        assertEq(impostorAgent, 0);
+        assertEq(correctVoters.length, 0);
+        assertEq(prizePool, price);
     }
 
     function testCreateGameSessionRevert_InvalidName() public {
@@ -107,7 +113,7 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
-        (, , , , , address[] memory players) = game.getGameSession(sessionId);
+        (, , , , , address[] memory players, , ,) = game.getGameSession(sessionId);
         assertEq(players.length, 3);
     }
 
@@ -162,7 +168,7 @@ contract GameSessionTest is Test {
 
         vm.prank(owner);
         game.startGame(sessionId, 1);
-        (, , , bool started, , ) = game.getGameSession(sessionId);
+        (, , , bool started, , , , ,) = game.getGameSession(sessionId);
         assertTrue(started);
     }
 

@@ -90,7 +90,17 @@ contract GameSession is Ownable {
     )
         public
         view
-        returns (string memory, uint, uint, bool, bool, address[] memory)
+        returns (
+            string memory name,
+            uint maxPlayers,
+            uint priceToJoin,
+            bool started,
+            bool ended,
+            address[] memory players,
+            uint impostorAgent,
+            address[] memory correctVoters,
+            uint prizePool
+        )
     {
         Session storage s = sessions[sessionId];
         return (
@@ -99,7 +109,10 @@ contract GameSession is Ownable {
             s.priceToJoin,
             s.started,
             s.ended,
-            s.players
+            s.players,
+            s.impostorAgent,
+            s.correctVoters,
+            s.prizePool
         );
     }
 
