@@ -1,80 +1,98 @@
-# 🏗 Scaffold-ETH 2
+# 🕵️ Impostors.AI – AI-Powered Social Deduction Game
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+Impostors.AI is a **fully on-chain AI social deduction game** where players must identify the **hidden traitor** among a group of **intelligent AI agents**. These AI agents engage in **real-time discussions and strategy planning**, but one of them is secretly **sabotaging the plans**.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+Players analyze the AI-generated conversations and vote to eliminate the **suspected impostor** before time runs out. The game is **completely autonomous**, leveraging **AI agents, blockchain smart contracts, and real-time interactions**.
 
-⚙️ Built using NextJS, RainbowKit, Foundry, Wagmi, Viem, and Typescript.
+---
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+## 🚀 Tech Stack
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+The project is built using a **modern Web3 and AI tech stack**:
 
-## Requirements
+| **Component**     | **Technology**           |
+|-------------------|-------------------------|
+| **Blockchain**    | Foundry + Solidity (Smart Contracts) |
+| **Frontend**      | Next.js + Scaffold-ETH 2 |
+| **Backend**       | NestJS (Handles API & AI Communication) |
+| **AI Agents**     | LangGraph (Manages AI-driven discussions) |
+| **Storage**       | IPFS-based (via Fileverse) |
 
-Before you begin, you need to install the following tools:
+---
 
-- [Node (>= v18.18)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+## 🛠️ Running the Project Locally
 
-## Quickstart
+Follow these steps to set up and run **Impostors.AI** on your local machine.
 
-To get started with Scaffold-ETH 2, follow the steps below:
+### 1️⃣ **Start the Local Blockchain**
+Run an **Anvil** (Foundry) blockchain instance locally:
 
-1. Install dependencies if it was skipped in CLI:
-
-```
-cd my-dapp-example
-yarn install
-```
-
-2. Run a local network in the first terminal:
-
-```
+```sh
 yarn chain
 ```
 
-This command starts a local Ethereum network using Foundry. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/foundry/foundry.toml`.
+### 2️⃣ **Deploy the Smart Contracts**
+Deploy the smart contract (GameSession) to the local blockchain:
 
-3. On a second terminal, deploy the test contract:
+```sh
+yarn foundry:deploy
+```
+
+### 3️⃣ **Set Up the API (.env)**
+Navigate to packages/api/ and create a .env file with the following variables:
+
+```sh
+TOGETHERAI_API_KEY= # Get a free API key from https://api.together.ai/
+RPC_URL=http://127.0.0.1:8545  # Local Anvil RPC
+PRIVATE_KEY= # Use Anvil’s Account #9 private key
+CONTRACT_ADDRESS= # Use the deployed contract address
+```
+### 4️⃣ **Run the Backend API**
+Go back to the root directory and start the NestJS API:
+
+
+```sh
+yarn start:api
 
 ```
-yarn deploy
+
+### 5️⃣ **Set Up the Frontend (.env)**
+Navigate to packages/nextjs/ and create a .env file:
+
+```sh
+NEXT_PUBLIC_API_URL=http://localhost:8080  # Or your custom API PORT
+
 ```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/foundry/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/foundry/script` to deploy the contract to the network. You can also customize the deploy script.
+### 6️⃣ **Run the Frontend**
+Go back to the root directory and start the Next.js frontend:
 
-4. On a third terminal, start your NextJS app:
-
-```
+```sh
 yarn start
+
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+### 7️⃣ **Open the App in Your Browser**
+Visit:
 
-Run smart contract test with `yarn foundry:test`
+```sh
+http://localhost:3000
+```
 
-- Edit your smart contracts in `packages/foundry/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/foundry/script`
+🚀 You’re now ready to play Impostors.AI locally!
 
+---
 
-## Documentation
+## 💡 Contributing
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
+We welcome contributions! If you’d like to improve Impostors.AI, feel free to:
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+ - Fork the repo
+ - Create a new branch
+ - Submit a pull request
+  
+---
 
-## Contributing to Scaffold-ETH 2
+## 📜 License
 
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+This project is licensed under the MIT License.
