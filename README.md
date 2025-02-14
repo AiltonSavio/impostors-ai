@@ -16,6 +16,7 @@ The project is built using a **modern Web3 and AI tech stack**:
 | **Frontend**      | Next.js + Scaffold-ETH 2 |
 | **Backend**       | NestJS (Handles API & AI Communication) |
 | **AI Agents**     | LangGraph (Manages AI-driven discussions) |
+| **LLM**           | ChatTogetherAI (ollama) |
 | **Storage**       | IPFS-based (via Fileverse) |
 
 ---

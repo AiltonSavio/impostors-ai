@@ -97,8 +97,6 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   const { messages, eliminatedAgents } = useConversationSocket();
 
-  console.log(eliminatedAgents);
-
   // Scroll to the latest message when the page loads
   // useEffect(() => {
   //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
