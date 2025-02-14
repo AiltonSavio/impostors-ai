@@ -108,6 +108,7 @@ const Home: NextPage = () => {
                 <button
                   className="btn btn-primary rounded-xl w-2/6"
                   onClick={() => handleJoinSession(latestSessionData[2])}
+                  disabled={latestSessionData[3]}
                 >
                   Join Session
                 </button>

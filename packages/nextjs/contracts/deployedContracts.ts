@@ -58,6 +58,16 @@ const deployedContracts = {
               type: "uint256",
               internalType: "uint256",
             },
+            {
+              name: "_impostorAgent",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "nonce",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
           outputs: [],
           stateMutability: "nonpayable",
@@ -104,17 +114,22 @@ const deployedContracts = {
               internalType: "address[]",
             },
             {
-              name: "impostorAgent",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
               name: "correctVoters",
               type: "address[]",
               internalType: "address[]",
             },
             {
               name: "prizePool",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "startTime",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "impostorAgent",
               type: "uint256",
               internalType: "uint256",
             },
@@ -196,9 +211,9 @@ const deployedContracts = {
               internalType: "uint256",
             },
             {
-              name: "_impostorAgent",
-              type: "uint256",
-              internalType: "uint256",
+              name: "_impostorCommitment",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [],
@@ -247,6 +262,19 @@ const deployedContracts = {
           ],
           outputs: [],
           stateMutability: "nonpayable",
+        },
+        {
+          type: "event",
+          name: "AllPlayersJoined",
+          inputs: [
+            {
+              name: "sessionId",
+              type: "uint256",
+              indexed: true,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
         },
         {
           type: "event",
@@ -453,6 +481,11 @@ const deployedContracts = {
         },
         {
           type: "error",
+          name: "InvalidReveal",
+          inputs: [],
+        },
+        {
+          type: "error",
           name: "OwnableInvalidOwner",
           inputs: [
             {
@@ -493,14 +526,9 @@ const deployedContracts = {
           name: "TreasuryTransferFailed",
           inputs: [],
         },
-        {
-          type: "error",
-          name: "VotingNotAllowed",
-          inputs: [],
-        },
       ],
       inheritedFunctions: {},
-      deploymentFile: "run-1739311226.json",
+      deploymentFile: "run-1739499150.json",
       deploymentScript: "DeployGameSession.s.sol",
     },
   },

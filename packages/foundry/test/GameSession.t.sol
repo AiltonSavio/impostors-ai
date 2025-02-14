@@ -50,9 +50,10 @@ contract GameSessionTest is Test {
             bool started,
             bool ended,
             address[] memory players,
-            uint impostorAgent,
             address[] memory correctVoters,
-            uint prizePool
+            uint prizePool,
+            uint startTime,
+            uint impostorAgent
         ) = game.getGameSession(sessionId);
         assertEq(name, "Test Game");
         assertEq(maxPlayers, 5);
@@ -61,9 +62,10 @@ contract GameSessionTest is Test {
         assertFalse(ended);
         // Creator automatically joined.
         assertEq(players.length, 1);
-        assertEq(impostorAgent, 0);
         assertEq(correctVoters.length, 0);
         assertEq(prizePool, price);
+        assertEq(startTime, 0);
+        assertEq(impostorAgent, 0);
     }
 
     function testCreateGameSessionRevert_InvalidName() public {
@@ -113,7 +115,9 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
-        (, , , , , address[] memory players, , ,) = game.getGameSession(sessionId);
+        (, , , , , address[] memory players, , , ,) = game.getGameSession(
+            sessionId
+        );
         assertEq(players.length, 3);
     }
 
@@ -166,9 +170,14 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        // Commit: choose impostor index and nonce.
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
-        (, , , bool started, , , , ,) = game.getGameSession(sessionId);
+        game.startGame(sessionId, commitment);
+        (, , , bool started, , , , , ,) = game.getGameSession(sessionId);
         assertTrue(started);
     }
 
@@ -184,9 +193,13 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(player1);
         vm.expectRevert();
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
     }
 
     function testStartGameRevert_AlreadyStarted() public {
@@ -201,11 +214,15 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSignature("GameAlreadyStarted()"));
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
     }
 
     /// ---------------------
@@ -242,8 +259,12 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         // Warp less than 120 seconds after start.
         vm.warp(block.timestamp + 100);
         vm.prank(player1);
@@ -263,8 +284,12 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         vm.warp(block.timestamp + 121);
         vm.prank(player1);
         game.vote(sessionId, 1);
@@ -285,15 +310,19 @@ contract GameSessionTest is Test {
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
 
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         vm.warp(block.timestamp + 121);
         vm.prank(player1);
         game.vote(sessionId, 1);
         // End the game.
         vm.warp(block.timestamp + 600);
         vm.prank(owner);
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
         vm.prank(player2);
         vm.expectRevert(abi.encodeWithSignature("GameAlreadyEnded()"));
         game.vote(sessionId, 1);
@@ -315,8 +344,12 @@ contract GameSessionTest is Test {
         game.joinGameSession{value: price}(sessionId);
 
         // Start game with traitor index 0.
+        uint impostorIndex = 0;
+        uint nonce = 111;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 0);
+        game.startGame(sessionId, commitment);
 
         // Warp time to allow voting.
         vm.warp(block.timestamp + 121);
@@ -334,7 +367,7 @@ contract GameSessionTest is Test {
         // Warp to after endGame time.
         vm.warp(block.timestamp + 600);
         vm.prank(owner);
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
         uint treasuryBalanceAfter = treasury.balance;
         // Expect the entire prize pool (3 * price) goes to treasury.
         uint expectedPool = 3 * price;
@@ -357,8 +390,12 @@ contract GameSessionTest is Test {
         game.joinGameSession{value: price}(sessionId);
 
         // Start game with traitor index 2 (player3 is traitor).
+        uint impostorIndex = 2;
+        uint nonce = 222;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 2);
+        game.startGame(sessionId, commitment);
 
         // Warp time to allow voting.
         vm.warp(block.timestamp + 121);
@@ -390,7 +427,7 @@ contract GameSessionTest is Test {
         uint treasuryBalanceBefore = treasury.balance;
         vm.warp(block.timestamp + 600);
         vm.prank(owner);
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
         uint treasuryBalanceAfter = treasury.balance;
         assertEq(treasuryBalanceAfter - treasuryBalanceBefore, treasuryCut);
 
@@ -418,12 +455,17 @@ contract GameSessionTest is Test {
         game.joinGameSession{value: price}(sessionId);
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
+
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         vm.warp(block.timestamp + 500);
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSignature("GameNotEndedYet()"));
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
     }
 
     function testEndGameRevert_AlreadyEnded() public {
@@ -437,13 +479,46 @@ contract GameSessionTest is Test {
         game.joinGameSession{value: price}(sessionId);
         vm.prank(player3);
         game.joinGameSession{value: price}(sessionId);
+
+        uint impostorIndex = 1;
+        uint nonce = 42;
+        bytes32 commitment = keccak256(abi.encodePacked(impostorIndex, nonce));
+
         vm.prank(owner);
-        game.startGame(sessionId, 1);
+        game.startGame(sessionId, commitment);
         vm.warp(block.timestamp + 600);
         vm.prank(owner);
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSignature("GameAlreadyEnded()"));
-        game.endGame(sessionId);
+        game.endGame(sessionId, impostorIndex, nonce);
+    }
+
+    function testEndGameRevert_InvalidReveal() public {
+        uint sessionId;
+        // Create a session with 3 players.
+        vm.prank(player1);
+        sessionId = game.createGameSession{value: price}("Test Game", 3, price);
+        vm.prank(player2);
+        game.joinGameSession{value: price}(sessionId);
+        vm.prank(player3);
+        game.joinGameSession{value: price}(sessionId);
+
+        uint correctImpostorIndex = 1;
+        uint correctNonce = 42;
+        bytes32 commitment = keccak256(
+            abi.encodePacked(correctImpostorIndex, correctNonce)
+        );
+
+        vm.prank(owner);
+        game.startGame(sessionId, commitment);
+
+        // Warp time to after endGame allowed period.
+        vm.warp(block.timestamp + 600);
+
+        // Now supply incorrect parameters (e.g. wrong impostor index).
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSignature("InvalidReveal()"));
+        game.endGame(sessionId, 2, correctNonce);
     }
 }

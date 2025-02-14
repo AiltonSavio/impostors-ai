@@ -18,11 +18,13 @@ error InsufficientDeposit();
 error PlayerAlreadyJoined();
 error TreasuryTransferFailed();
 error RewardTransferFailed();
+error InvalidReveal();
 
 contract GameSession is Ownable {
     uint public sessionCounter;
-    // Minimum deposit for creating a session: 0.005 ETH.
+
     uint constant MIN_DEPOSIT = 0.005 ether;
+    uint constant GAME_DURATION = 600; // 10 minutes
 
     // Treasury is payable.
     address payable public treasury;
@@ -40,7 +42,9 @@ contract GameSession is Ownable {
         address[] correctVoters; // Order of players who voted correctly.
         bool started;
         bool ended;
-        uint impostorAgent; // Index into players array indicating the traitor.
+        // Instead of storing the impostor index, we store the commitment hash.
+        bytes32 impostorCommitment;
+        uint impostorAgent;
         uint prizePool; // Total deposits in wei.
     }
 
@@ -97,9 +101,10 @@ contract GameSession is Ownable {
             bool started,
             bool ended,
             address[] memory players,
-            uint impostorAgent,
             address[] memory correctVoters,
-            uint prizePool
+            uint prizePool,
+            uint startTime,
+            uint impostorAgent
         )
     {
         Session storage s = sessions[sessionId];
@@ -110,9 +115,10 @@ contract GameSession is Ownable {
             s.started,
             s.ended,
             s.players,
-            s.impostorAgent,
             s.correctVoters,
-            s.prizePool
+            s.prizePool,
+            s.startTime,
+            s.impostorAgent
         );
     }
 
@@ -134,7 +140,9 @@ contract GameSession is Ownable {
 
         s.players.push(msg.sender);
         s.prizePool += msg.value;
+        s.votedAgent[msg.sender] = 10;
         emit PlayerJoined(sessionId, msg.sender);
+        if (s.players.length == s.maxPlayers) emit AllPlayersJoined(sessionId);
     }
 
     /// @notice Allows a player to vote for the traitor.
@@ -153,33 +161,44 @@ contract GameSession is Ownable {
         emit VoteCast(sessionId, msg.sender);
     }
 
-    /// @notice Starts the game.
-    /// Only the owner can call this.
+    /// @notice Starts the game by storing a commitment hash instead of the direct impostor index.
     /// @param sessionId The session ID.
-    /// @param _impostorAgent The index of the traitor in the players array.
-    function startGame(uint sessionId, uint _impostorAgent) public onlyOwner {
+    /// @param _impostorCommitment The hash computed offchain, e.g., keccak256(abi.encodePacked(impostorAgent, nonce)).
+    function startGame(uint sessionId, bytes32 _impostorCommitment) public onlyOwner {
         Session storage s = sessions[sessionId];
         if (s.started) revert GameAlreadyStarted();
         s.startTime = block.timestamp;
-        s.impostorAgent = _impostorAgent;
+        s.impostorCommitment = _impostorCommitment;
+        s.impostorAgent = 10; // impostor not shown yet
         s.started = true;
         emit GameStarted(sessionId);
     }
 
-    /// @notice Ends the game after at least 10 minutes and distributes rewards.
-    /// If no player voted correctly, the entire prize pool goes to the treasury.
-    /// Otherwise, 5% of the prize pool is sent to the treasury and the remaining is distributed among correct voters.
+    /// @notice Ends the game after at least 10 minutes.
+    /// The owner must provide the preimage (impostorAgent and nonce) that matches the stored commitment.
     /// @param sessionId The session ID.
-    function endGame(uint sessionId) public onlyOwner {
+    /// @param _impostorAgent The actual impostor index.
+    /// @param nonce The nonce used in the commitment.
+    function endGame(
+        uint sessionId,
+        uint _impostorAgent,
+        uint nonce
+    ) public onlyOwner {
         Session storage s = sessions[sessionId];
-        if (block.timestamp < s.startTime + 600) revert GameNotEndedYet();
+        if (block.timestamp < s.startTime + GAME_DURATION) revert GameNotEndedYet();
         if (s.ended) revert GameAlreadyEnded();
+
+        // Verify the commitment
+        if (keccak256(abi.encodePacked(_impostorAgent, nonce)) != s.impostorCommitment) {
+            revert InvalidReveal();
+        }
         s.ended = true;
+        s.impostorAgent = _impostorAgent;
 
         uint count = 0;
         for (uint i = 0; i < s.voteOrder.length; i++) {
             address voter = s.voteOrder[i];
-            if (s.votedAgent[voter] == s.impostorAgent) {
+            if (s.votedAgent[voter] == _impostorAgent) {
                 s.correctVoters.push(voter);
                 count++;
             }
@@ -231,9 +250,7 @@ contract GameSession is Ownable {
 
             for (uint i = 0; i < count; i++) {
                 uint reward = (effectivePool * percentages[i]) / 100;
-                (bool sent, ) = payable(s.correctVoters[i]).call{value: reward}(
-                    ""
-                );
+                (bool sent, ) = payable(s.correctVoters[i]).call{value: reward}("");
                 if (!sent) revert RewardTransferFailed();
                 emit RewardDistributed(sessionId, s.correctVoters[i], reward);
             }
@@ -249,6 +266,7 @@ contract GameSession is Ownable {
         uint priceToJoin
     );
     event PlayerJoined(uint indexed sessionId, address indexed player);
+    event AllPlayersJoined(uint indexed sessionId);
     event VoteCast(uint indexed sessionId, address indexed player);
     event GameStarted(uint indexed sessionId);
     event TreasuryPaid(uint indexed sessionId, uint amount);
