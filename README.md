@@ -1,6 +1,6 @@
-# 🕵️ Impostors.AI – AI-Powered Social Deduction Game
+# 🕵️ Impostors AI – AI-Powered Social Deduction Game
 
-Impostors.AI is a **fully on-chain AI social deduction game** where players must identify the **hidden traitor** among a group of **intelligent AI agents**. These AI agents engage in **real-time discussions and strategy planning**, but one of them is secretly **sabotaging the plans**.
+Impostors AI is a **fully on-chain AI social deduction game** where players must identify the **hidden traitor** among a group of **intelligent AI agents**. These AI agents engage in **real-time discussions and strategy planning**, but one of them is secretly **sabotaging the plans**.
 
 Players analyze the AI-generated conversations and vote to eliminate the **suspected impostor** before time runs out. The game is **completely autonomous**, leveraging **AI agents, blockchain smart contracts, and real-time interactions**.
 
@@ -23,7 +23,7 @@ The project is built using a **modern Web3 and AI tech stack**:
 
 ## 🛠️ Running the Project Locally
 
-Follow these steps to set up and run **Impostors.AI** on your local machine.
+Follow these steps to set up and run **Impostors AI** on your local machine.
 
 ### 1️⃣ Install Dependencies
 
@@ -103,13 +103,13 @@ Visit:
 http://localhost:3000
 ```
 
-🚀 You’re now ready to play Impostors.AI locally!
+🚀 You’re now ready to play Impostors AI locally!
 
 ---
 
 ## 💡 Contributing
 
-We welcome contributions! If you’d like to improve Impostors.AI, feel free to:
+We welcome contributions! If you’d like to improve Impostors AI, feel free to:
 
  - Fork the repo
  - Create a new branch

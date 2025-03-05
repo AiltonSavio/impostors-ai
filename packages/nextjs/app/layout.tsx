@@ -7,7 +7,7 @@ import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 const lexendDeca = Lexend_Deca({ subsets: ["latin"], weight: "400" });
 
-export const metadata = getMetadata({ title: "Impostors.AI", description: "AI-Powered Social Deduction Game" });
+export const metadata = getMetadata({ title: "Impostors AI", description: "AI-Powered Social Deduction Game" });
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (

@@ -13,7 +13,7 @@ export const Header = () => {
       <div className="w-auto lg:w-1/2">
         <Link href="/" passHref className="items-center gap-2 ml-4 mr-6 shrink-0">
           <div className="flex font-bold leading-tight">
-            <span className="hidden lg:flex">🎭 Impostors.AI</span>
+            <span className="hidden lg:flex">🎭 Impostors AI</span>
             <span className="flex lg:hidden">🎭</span>
           </div>
         </Link>
