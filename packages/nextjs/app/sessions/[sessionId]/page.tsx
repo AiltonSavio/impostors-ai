@@ -97,11 +97,6 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   const { messages, eliminatedAgents } = useConversationSocket();
 
-  // Scroll to the latest message when the page loads
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  // }, [messages]);
-
   if (!latestSessionData || !latestSessionData[0] || isLoadingLatestSession) {
     return (
       <>
@@ -111,7 +106,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
           </div>
         ) : (
           <div className="flex items-center justify-center h-[86.7vh]">
-            <h1 className="text-2xl font-bold">This session hasn’t been created yet.</h1>
+            <h1 className="text-2xl font-bold px-4 sm:px-0 text-center">This session hasn’t been created yet.</h1>
           </div>
         )}
       </>
@@ -127,9 +122,9 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const prizePool = formatEther(latestSessionData[7]);
 
   return (
-    <div className="flex min-h-[86.7vh]">
+    <div className="flex flex-1 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-72 bg-base-100 dark:text-white p-4">
+      <aside className="w-72 bg-base-100 dark:text-white p-4 min-h-0 overflow-y-auto">
         <div className="space-y-4 mt-2">
           {agents.map(agent => {
             const isEliminated = eliminatedAgents.includes(agent.key);
@@ -168,8 +163,8 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       </aside>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8">
-        <div className="bg-base-100 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
+      <div className="flex-1 flex flex-col overflow-hidden p-8">
+        <div className="bg-base-100 rounded-lg p-6 m-4 flex flex-col flex-1 overflow-hidden">
           <h1 className="dark:text-white text-2xl font-bold mb-4">{sessionName} Chat</h1>
           {!sessionStarted ? (
             <>
@@ -199,7 +194,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
               </p>
               <p className="mt-2">Winners:</p>
               <ul className="list-disc pl-5 text-green-500">
-                {latestSessionData[6].map((winner: string, index: number) => (
+                {latestSessionData[6].map((winner, index) => (
                   <li key={index}>{winner}</li>
                 ))}
               </ul>
@@ -213,13 +208,15 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
               </ul>
             </>
           ) : (
-            <div ref={chatBoxRef} className="overflow-y-auto overflow-x-hidden max-h-[60vh] space-y-6 p-5">
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4">
               {messages.map((msg, i) => (
-                <div key={i} className="relative flex justify-end">
+                <div key={i} className="relative flex justify-end mb-4">
                   <div className="bg-base-200 dark:text-white rounded-lg p-4 max-w-lg relative">
                     <p>{msg.content}</p>
                     <div
-                      className={`${msg.name === "Narrator" ? "" : "cursor-pointer"} absolute -top-3 -right-3 rounded-full border border-primary bg-white`}
+                      className={`${
+                        msg.name === "Narrator" ? "" : "cursor-pointer"
+                      } absolute -top-3 -right-3 rounded-full border border-primary bg-white`}
                       style={{ width: "42px", height: "42px" }}
                       onClick={() => setSelectedAgent(agents.find(a => a.key === msg.name) || null)}
                     >

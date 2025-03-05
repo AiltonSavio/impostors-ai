@@ -526,10 +526,15 @@ const deployedContracts = {
           name: "TreasuryTransferFailed",
           inputs: [],
         },
+        {
+          type: "error",
+          name: "VotingNotAllowed",
+          inputs: [],
+        },
       ],
       inheritedFunctions: {},
-      deploymentFile: "run-1739499150.json",
-      deploymentScript: "DeployGameSession.s.sol",
+      deploymentFile: "run-1741043053.json",
+      deploymentScript: "Deploy.s.sol",
     },
   },
 } as const;

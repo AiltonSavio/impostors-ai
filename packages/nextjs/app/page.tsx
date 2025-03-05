@@ -90,7 +90,7 @@ const Home: NextPage = () => {
       <div className="flex items-center justify-center pt-10 bg-base-300">
         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Create New Game Card */}
-          <div className="flex flex-col bg-base-100 text-center items-center justify-center rounded-xl w-[444px] h-[377px]">
+          <div className="flex flex-col bg-base-100 text-center items-center justify-center rounded-xl w-[320px] h-[272px] sm:w-[444px] sm:h-[377px]">
             <span className="font-bold text-xl mb-3">Create New Game</span>
             <button className="btn btn-primary px-8 rounded-xl" onClick={() => setCreateModalOpen(true)}>
               Create Session
@@ -99,14 +99,14 @@ const Home: NextPage = () => {
           {/* Display the latest session if available */}
           {latestSessionData && latestSessionData[0] && (
             <div className="flex items-center justify-center">
-              <div className="flex flex-col bg-base-200 rounded-xl w-[444px] h-[377px] p-4">
+              <div className="flex flex-col bg-base-200 rounded-xl w-[320px] h-[272px] sm:w-[444px] sm:h-[377px] p-4">
                 <span className="font-bold text-xl mb-1">{latestSessionData[0] /* Session name */}</span>
                 <p className="-mb-2">
                   Players: {latestSessionData[5].length}/{Number(latestSessionData[1]) /* maxPlayers */}
                 </p>
                 <p className="mb-4">Price to Join: {Number(formatEther(latestSessionData[2]))} ETH</p>
                 <button
-                  className="btn btn-primary rounded-xl w-2/6"
+                  className="btn btn-primary rounded-xl w-1/2 sm:w-2/6"
                   onClick={() => handleJoinSession(latestSessionData[2])}
                   disabled={latestSessionData[3]}
                 >
@@ -114,7 +114,7 @@ const Home: NextPage = () => {
                 </button>
                 {/* Enter the session page "/sessions/[sessionId]" */}
                 <Link href={`/sessions/${latestSessionId}`}>
-                  <button className="btn btn-warning rounded-xl w-2/6 mt-3">Enter Session</button>
+                  <button className="btn btn-warning rounded-xl w-1/2 sm:w-2/6 mt-3">Enter Session</button>
                 </Link>
               </div>
             </div>
@@ -125,7 +125,7 @@ const Home: NextPage = () => {
       {/* Modal for creating a session */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div ref={modalRef} className="bg-base-100 rounded-lg p-6 w-full max-w-lg">
+          <div ref={modalRef} className="bg-base-100 rounded-lg p-6  w-[375px] sm:w-full max-w-lg">
             <h2 className="text-2xl font-bold mb-4">Create New Game</h2>
             <div className="space-y-4">
               <div>
