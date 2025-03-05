@@ -1940,6 +1940,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@langchain/ollama@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@langchain/ollama@npm:0.2.0"
+  dependencies:
+    ollama: ^0.5.12
+    uuid: ^10.0.0
+    zod: ^3.24.1
+    zod-to-json-schema: ^3.24.1
+  peerDependencies:
+    "@langchain/core": ">=0.2.21 <0.4.0"
+  checksum: 0f6d9f378a7ca70214fdb93ff8c996a178567227cbea693fc049d033fec87e32d397af52d78d6e4d107ee8086b966ce0523eba36f03c9c0055432e0a81750244
+  languageName: node
+  linkType: hard
+
 "@langchain/openai@npm:>=0.1.0 <0.5.0, @langchain/openai@npm:>=0.2.0 <0.5.0":
   version: 0.4.3
   resolution: "@langchain/openai@npm:0.4.3"
@@ -1951,6 +1965,20 @@ __metadata:
   peerDependencies:
     "@langchain/core": ">=0.3.39 <0.4.0"
   checksum: 2ce03e4c7e6079e5cecf6b71db32973dbde53431667775de42cec0c7c07a8a788c87c33923e03807e338d9774807f47f7d9903fe9458c4eca134fc2b663b4823
+  languageName: node
+  linkType: hard
+
+"@langchain/openai@npm:^0.4.4":
+  version: 0.4.4
+  resolution: "@langchain/openai@npm:0.4.4"
+  dependencies:
+    js-tiktoken: ^1.0.12
+    openai: ^4.77.0
+    zod: ^3.22.4
+    zod-to-json-schema: ^3.22.3
+  peerDependencies:
+    "@langchain/core": ">=0.3.39 <0.4.0"
+  checksum: fb8fe03764637a790b47f4a0c7d7050c796b43a4c03590e77b00c3183c52581f52d4077cec7b57ad4eeb7710d3bbbf1d8286e225da5e844580592d4e3218b1f2
   languageName: node
   linkType: hard
 
@@ -2949,6 +2977,8 @@ __metadata:
     "@langchain/community": ^0.3.29
     "@langchain/core": ^0.3.39
     "@langchain/langgraph": ^0.2.45
+    "@langchain/ollama": ^0.2.0
+    "@langchain/openai": ^0.4.4
     "@nestjs/cli": ^9.0.0
     "@nestjs/common": ^9.0.0
     "@nestjs/config": ^4.0.0
@@ -12072,6 +12102,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ollama@npm:^0.5.12":
+  version: 0.5.14
+  resolution: "ollama@npm:0.5.14"
+  dependencies:
+    whatwg-fetch: ^3.6.20
+  checksum: c94cf976c6e56c30814b7a6d160af2c59c52c8557277161419b49d95811b820bc1813a4a6e5da21385d1e6ebc5aa1efe031dfc19bb5f62000268ff1d2a39ba5b
+  languageName: node
+  linkType: hard
+
 "on-exit-leak-free@npm:^0.2.0":
   version: 0.2.0
   resolution: "on-exit-leak-free@npm:0.2.0"
@@ -15832,6 +15871,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"whatwg-fetch@npm:^3.6.20":
+  version: 3.6.20
+  resolution: "whatwg-fetch@npm:3.6.20"
+  checksum: c58851ea2c4efe5c2235f13450f426824cf0253c1d45da28f45900290ae602a20aff2ab43346f16ec58917d5562e159cd691efa368354b2e82918c2146a519c5
+  languageName: node
+  linkType: hard
+
 "whatwg-url@npm:^5.0.0":
   version: 5.0.0
   resolution: "whatwg-url@npm:5.0.0"
@@ -16264,6 +16310,15 @@ __metadata:
   peerDependencies:
     zod: ^3.24.1
   checksum: 7195563f611bc21ea7f44129b8e32780125a9bd98b2e6b8709ac98bd2645729fecd87b8aeeaa8789617ee3f38e6585bab23dd613e2a35c31c6c157908f7a1681
+  languageName: node
+  linkType: hard
+
+"zod-to-json-schema@npm:^3.24.1":
+  version: 3.24.3
+  resolution: "zod-to-json-schema@npm:3.24.3"
+  peerDependencies:
+    zod: ^3.24.1
+  checksum: f395bb6ecef350a2347945e98f0f97e59f18606d9ee78dc5172d53af07954f42e515cf38d51d32d67f166838619a82604e62b5f18369194dffa7907719b7695f
   languageName: node
   linkType: hard
 

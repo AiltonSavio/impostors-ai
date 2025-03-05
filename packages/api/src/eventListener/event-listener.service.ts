@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ethers } from 'ethers';
 import { ConversationRunnerService } from '../conversation/conversation-runner.service';
 import GAME_SESSION_ABI from '../abis/GameSession.json';
-import { roles } from 'src/agents';
+import { roles } from 'src/graph/agents';
 
 @Injectable()
 export class EventListenerService implements OnModuleInit {
@@ -65,7 +65,7 @@ export class EventListenerService implements OnModuleInit {
 
         // Schedule a timeout to end the game after 10 minutes (600000 ms)
         setTimeout(async () => {
-          // Abort the conversation (see updated conversation-runner below)
+          // Abort the conversation
           this.conversationRunnerService.stopConversation();
           // Call endGame with the actual reveal values
           const txEnd = await this.contract.endGame(

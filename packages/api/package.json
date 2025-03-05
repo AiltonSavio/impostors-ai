@@ -23,6 +23,8 @@
     "@langchain/community": "^0.3.29",
     "@langchain/core": "^0.3.39",
     "@langchain/langgraph": "^0.2.45",
+    "@langchain/ollama": "^0.2.0",
+    "@langchain/openai": "^0.4.4",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^9.0.0",

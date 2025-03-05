@@ -40,14 +40,7 @@ Run an **Anvil** (Foundry) blockchain instance locally:
 yarn chain
 ```
 
-### 3️⃣ **Modify Smart Contract for Local Testing**
-Comment out line 154 in ``GameSession.sol`` to bypass the timestamp restriction:
-
-```solidity
-// if (block.timestamp < s.startTime + 120) revert VotingNotAllowed();
-```
-
-### 4️⃣ **Compile the Smart Contracts**
+### 3️⃣ **Compile the Smart Contracts**
 
 Compile the smart contracts using Foundry:
 
@@ -55,23 +48,23 @@ Compile the smart contracts using Foundry:
 yarn foundry:compile
 ```
 
-### 5️⃣ **Deploy the Smart Contracts**
+### 4️⃣ **Deploy the Smart Contracts**
 Deploy the smart contract (GameSession) to the local blockchain:
 
 ```sh
 yarn foundry:deploy
 ```
 
-### 6️⃣ **Set Up the API (.env)**
-Navigate to packages/api/ and create a .env file with the following variables:
+### 5️⃣ **Set Up the API (.env)**
+Navigate to ``packages/api/`` and create a .env file with the following variables:
 
 ```sh
-TOGETHERAI_API_KEY= # Get a free API key from https://api.together.ai/
+TOGETHERAI_API_KEY= # Get a free API key from https://api.together.ai/. If running with DeepSeek, you can leave this empty.
 RPC_URL=http://127.0.0.1:8545  # Local Anvil RPC
 PRIVATE_KEY= # Use Anvil’s Account #9 private key
 CONTRACT_ADDRESS= # Use the deployed contract address
 ```
-### 7️⃣ **Run the Backend API**
+### 6️⃣ **Run the Backend API**
 Go back to the root directory and start the NestJS API:
 
 
@@ -80,15 +73,23 @@ yarn start:api
 
 ```
 
-### 8️⃣ **Set Up the Frontend (.env)**
-Navigate to packages/nextjs/ and create a .env file:
+By default, the API will use TogetherAI. If you want to run it locally with DeepSeek (via Ollama), pass the --model=deepseek argument:
+
+
+```sh
+yarn start:api --model=deepseek
+
+```
+
+### 7️⃣ **Set Up the Frontend (.env)**
+Navigate to ``packages/nextjs/`` and create a .env file:
 
 ```sh
 NEXT_PUBLIC_API_URL=http://localhost:8080  # Or your custom API PORT
 
 ```
 
-### 9️⃣ **Run the Frontend**
+### 8️⃣ **Run the Frontend**
 Go back to the root directory and start the Next.js frontend:
 
 ```sh
@@ -96,7 +97,7 @@ yarn start
 
 ```
 
-### 🔟 **Open the App in Your Browser**
+### 9️⃣ **Open the App in Your Browser**
 Visit:
 
 ```sh
