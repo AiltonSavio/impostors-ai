@@ -25,21 +25,44 @@ The project is built using a **modern Web3 and AI tech stack**:
 
 Follow these steps to set up and run **Impostors.AI** on your local machine.
 
-### 1️⃣ **Start the Local Blockchain**
+### 1️⃣ Install Dependencies
+
+Run the following command to install all dependencies:
+
+```sh
+yarn install
+```
+
+### 2️⃣ **Start the Local Blockchain**
 Run an **Anvil** (Foundry) blockchain instance locally:
 
 ```sh
 yarn chain
 ```
 
-### 2️⃣ **Deploy the Smart Contracts**
+### 3️⃣ **Modify Smart Contract for Local Testing**
+Comment out line 154 in ``GameSession.sol`` to bypass the timestamp restriction:
+
+```solidity
+// if (block.timestamp < s.startTime + 120) revert VotingNotAllowed();
+```
+
+### 4️⃣ **Compile the Smart Contracts**
+
+Compile the smart contracts using Foundry:
+
+```sh
+yarn foundry:compile
+```
+
+### 5️⃣ **Deploy the Smart Contracts**
 Deploy the smart contract (GameSession) to the local blockchain:
 
 ```sh
 yarn foundry:deploy
 ```
 
-### 3️⃣ **Set Up the API (.env)**
+### 6️⃣ **Set Up the API (.env)**
 Navigate to packages/api/ and create a .env file with the following variables:
 
 ```sh
@@ -48,7 +71,7 @@ RPC_URL=http://127.0.0.1:8545  # Local Anvil RPC
 PRIVATE_KEY= # Use Anvil’s Account #9 private key
 CONTRACT_ADDRESS= # Use the deployed contract address
 ```
-### 4️⃣ **Run the Backend API**
+### 7️⃣ **Run the Backend API**
 Go back to the root directory and start the NestJS API:
 
 
@@ -57,7 +80,7 @@ yarn start:api
 
 ```
 
-### 5️⃣ **Set Up the Frontend (.env)**
+### 8️⃣ **Set Up the Frontend (.env)**
 Navigate to packages/nextjs/ and create a .env file:
 
 ```sh
@@ -65,7 +88,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080  # Or your custom API PORT
 
 ```
 
-### 6️⃣ **Run the Frontend**
+### 9️⃣ **Run the Frontend**
 Go back to the root directory and start the Next.js frontend:
 
 ```sh
@@ -73,7 +96,7 @@ yarn start
 
 ```
 
-### 7️⃣ **Open the App in Your Browser**
+### 🔟 **Open the App in Your Browser**
 Visit:
 
 ```sh
