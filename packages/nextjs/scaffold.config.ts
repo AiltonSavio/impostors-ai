@@ -11,9 +11,11 @@ export type ScaffoldConfig = {
 
 export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
+const isProd = process.env.VERCEL_ENV === "production";
+
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  targetNetworks: [chains.foundry, chains.avalanche, chains.avalancheFuji],
+  targetNetworks: isProd ? [chains.avalancheFuji] : [chains.foundry, chains.avalancheFuji],
 
   // The interval at which your front-end polls the RPC servers for new data
   // it has no effect if you only target the local network (default is 4000)
