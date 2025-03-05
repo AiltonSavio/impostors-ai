@@ -163,8 +163,8 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       </aside>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden p-8">
-        <div className="bg-base-100 rounded-lg p-6 m-4 flex flex-col flex-1 overflow-hidden">
+      <div className="flex-1 flex flex-col justify-center items-center p-8">
+        <div className="bg-base-100 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
           <h1 className="dark:text-white text-2xl font-bold mb-4">{sessionName} Chat</h1>
           {!sessionStarted ? (
             <>
@@ -194,7 +194,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
               </p>
               <p className="mt-2">Winners:</p>
               <ul className="list-disc pl-5 text-green-500">
-                {latestSessionData[6].map((winner, index) => (
+                {latestSessionData[6].map((winner: string, index: number) => (
                   <li key={index}>{winner}</li>
                 ))}
               </ul>
@@ -208,15 +208,13 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
               </ul>
             </>
           ) : (
-            <div ref={chatBoxRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+            <div ref={chatBoxRef} className="overflow-y-auto overflow-x-hidden max-h-[60vh] space-y-6 p-5">
               {messages.map((msg, i) => (
-                <div key={i} className="relative flex justify-end mb-4">
+                <div key={i} className="relative flex justify-end">
                   <div className="bg-base-200 dark:text-white rounded-lg p-4 max-w-lg relative">
                     <p>{msg.content}</p>
                     <div
-                      className={`${
-                        msg.name === "Narrator" ? "" : "cursor-pointer"
-                      } absolute -top-3 -right-3 rounded-full border border-primary bg-white`}
+                      className={`${msg.name === "Narrator" ? "" : "cursor-pointer"} absolute -top-3 -right-3 rounded-full border border-primary bg-white`}
                       style={{ width: "42px", height: "42px" }}
                       onClick={() => setSelectedAgent(agents.find(a => a.key === msg.name) || null)}
                     >
