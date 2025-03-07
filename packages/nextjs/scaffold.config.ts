@@ -11,7 +11,7 @@ export type ScaffoldConfig = {
 
 export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
-const isProd = process.env.VERCEL_ENV === "production";
+const isProd = process.env.NODE_ENV === "production";
 
 const scaffoldConfig = {
   // The networks on which your DApp is live
