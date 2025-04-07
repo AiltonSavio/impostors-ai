@@ -106,7 +106,9 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
           </div>
         ) : (
           <div className="flex items-center justify-center h-[86.7vh]">
-            <h1 className="text-2xl font-bold px-4 sm:px-0 text-center">This session hasn’t been created yet.</h1>
+            <h1 className="text-2xl font-bold px-4 sm:px-0 text-center text-primary-content">
+              This session hasn’t been created yet.
+            </h1>
           </div>
         )}
       </>
@@ -124,7 +126,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-72 bg-base-100 dark:text-white p-4 min-h-0 overflow-y-auto">
+      <aside className="w-72 bg-base-200 dark:text-white p-4 min-h-0 overflow-y-auto">
         <div className="space-y-4 mt-2">
           {agents.map(agent => {
             const isEliminated = eliminatedAgents.includes(agent.key);
@@ -164,7 +166,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col justify-center items-center p-8">
-        <div className="bg-base-100 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
+        <div className="bg-base-200 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
           <h1 className="dark:text-white text-2xl font-bold mb-4">{sessionName} Chat</h1>
           {!sessionStarted ? (
             <>
@@ -211,7 +213,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
             <div ref={chatBoxRef} className="overflow-y-auto overflow-x-hidden max-h-[60vh] space-y-6 p-5">
               {messages.map((msg, i) => (
                 <div key={i} className="relative flex justify-end">
-                  <div className="bg-base-200 dark:text-white rounded-lg p-4 max-w-lg relative">
+                  <div className="bg-base-100 dark:text-white rounded-xl px-4 py-2 max-w-lg relative">
                     <p>{msg.content}</p>
                     <div
                       className={`${msg.name === "Narrator" ? "" : "cursor-pointer"} absolute -top-3 -right-3 rounded-full border border-primary bg-white`}
@@ -269,7 +271,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
                     ))}
                 </div>
                 <div className="flex justify-end">
-                  <button onClick={handleVote} className="btn btn-primary px-8 uppercase">
+                  <button onClick={handleVote} className="pixel-button bg-primary text-black">
                     Vote
                   </button>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 
@@ -9,16 +10,12 @@ import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaff
  */
 export const Header = () => {
   return (
-    <div className="sticky lg:static top-0 navbar bg-base-100 min-h-0 flex-shrink-0 justify-between z-20 shadow-md shadow-secondary px-0 sm:px-2">
-      <div className="w-auto lg:w-1/2">
-        <Link href="/" passHref className="items-center gap-2 ml-4 mr-6 shrink-0">
-          <div className="flex font-bold leading-tight">
-            <span className="hidden lg:flex">🎭 Impostors AI</span>
-            <span className="flex lg:hidden">🎭</span>
-          </div>
-        </Link>
-      </div>
-      <div className="navbar-end flex-grow mr-4">
+    <div className="sticky top-0 z-50 bg-[#0a1219] py-4 px-6 shadow-md flex justify-between items-center font-pixel">
+      <Link href="/" className="flex items-center gap-2">
+        <Image src="/favicon.png" alt="Impostors AI" width={48} height={48} />
+        <span className="text-xl text-[#EAE2D1] hidden sm:inline">Impostors AI</span>
+      </Link>
+      <div className="flex items-center gap-4">
         <RainbowKitCustomConnectButton />
         <FaucetButton />
       </div>
