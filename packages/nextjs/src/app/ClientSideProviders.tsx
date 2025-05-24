@@ -1,0 +1,44 @@
+"use client";
+
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
+import { getFullnodeUrl } from "@mysten/sui/client";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Header } from "@/components/Header";
+
+const networks = {
+  localnet: { url: getFullnodeUrl("localnet") },
+  devnet: { url: getFullnodeUrl("devnet") },
+  testnet: { url: getFullnodeUrl("testnet") },
+  mainnet: { url: getFullnodeUrl("mainnet") },
+};
+
+export function ClientSideProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const queryClient = new QueryClient();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <SuiClientProvider networks={networks} defaultNetwork={process.env.NEXT_PUBLIC_SUI_NETWORK! as keyof typeof networks}>
+          <WalletProvider autoConnect>
+            <div className={`flex flex-col min-h-screen `}>
+              <Header />
+              <main className="relative flex flex-col flex-1 bg-[url('/images/pixel-tiles-bg.png')] bg-repeat bg-top bg-base-100 font-pixel text-primary-content">
+                {children}
+              </main>
+            </div>
+          </WalletProvider>
+        </SuiClientProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}

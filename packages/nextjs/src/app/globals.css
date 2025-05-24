@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  font-family: "Pixelify Sans", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.input {
+  background-color: var(--fallback-b1, oklch(var(--b1)/var(--tw-bg-opacity,1)));
+}
+
+.input-bordered {
+  border-color: var(--fallback-bc, oklch(var(--bc)/.2)) !important;
+}
+
+.btn {
+  @apply shadow-md;
+}
+
+.btn.btn-ghost {
+  @apply shadow-none;
+}
+
+.pixel-button {
+  @apply inline-block text-center font-pixel text-xs w-40 sm:w-44 sm:text-sm px-5 py-3 uppercase;
+
+  border-radius: 12px;
+  border: none;
+
+  box-shadow:
+    inset 2px 2px 0 #00000066,
+    inset -2px -2px 0 #00000066,
+    0 0 0 2px #000;
+  /* Black border with pixel vibe */
+
+  transition: all 0.1s ease-in-out;
+}
+
+.pixel-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 2px 2px 0 #00000066,
+    inset -2px -2px 0 #00000066,
+    0 0 0 2px #000,
+    0 3px 0 #000;
+  filter: brightness(1.1);
+}
+
+.sonner-desc {
+  color: #bbb4a7 !important;
+  opacity: 0.92;
+}

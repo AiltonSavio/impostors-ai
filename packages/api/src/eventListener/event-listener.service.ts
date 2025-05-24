@@ -1,86 +1,192 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ethers } from 'ethers';
 import { ConversationRunnerService } from '../conversation/conversation-runner.service';
-import GAME_SESSION_ABI from '../abis/GameSession.json';
 import { roles } from 'src/graph/agents';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Transaction } from '@mysten/sui/transactions';
 
 @Injectable()
 export class EventListenerService implements OnModuleInit {
-  private readonly logger = new Logger(EventListenerService.name);
-  private provider: ethers.JsonRpcProvider;
-  private signer: ethers.Signer;
-  private contract: ethers.Contract;
+  private readonly network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  private client: SuiClient;
+  private signer: Ed25519Keypair;
+  private sessionDuration = 10 * 60; // 10 minutes
+  private managedSessions = new Set<string>();
 
   constructor(
     private readonly conversationRunnerService: ConversationRunnerService,
     private readonly configService: ConfigService,
   ) {
-    // Initialize provider and signer using env variables (set RPC_URL, PRIVATE_KEY, CONTRACT_ADDRESS in your .env)
-    const rpcUrl = this.configService.get<string>('RPC_URL');
-    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    this.network = this.configService.get<
+      'mainnet' | 'testnet' | 'devnet' | 'localnet'
+    >('SUI_NETWORK');
+    const rpcUrl = getFullnodeUrl(this.network);
 
-    const privateKey = this.configService.get<string>('PRIVATE_KEY');
-    this.signer = new ethers.Wallet(privateKey, this.provider);
+    this.client = new SuiClient({ url: rpcUrl });
 
-    const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
-    this.contract = new ethers.Contract(
-      contractAddress,
-      GAME_SESSION_ABI,
-      this.signer,
-    );
+    const adminSecretKey = this.configService.get<string>('ADMIN_SECRET_KEY');
+    this.signer = Ed25519Keypair.fromSecretKey(adminSecretKey);
   }
 
-  onModuleInit() {
-    this.listenToEvents();
+  async onModuleInit() {
+    await this.keeperLoop();
   }
 
-  listenToEvents() {
-    // Listen to the AllPlayersJoined event. (Assume the event signature is exactly as in your contract.)
-    this.contract.on('AllPlayersJoined', async (sessionId, event) => {
-      this.logger.log(
-        `AllPlayersJoined event detected for sessionId: ${sessionId.toString()}`,
-      );
-      try {
-        const impostorIndex = Math.floor(Math.random() * roles.length);
-        this.logger.log(`selected impostor: ${roles[impostorIndex].name}`);
-        const nonce = Math.floor(Math.random() * 100_000_000);
+  sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-        // Compute the commitment hash using ethers:
-        const commitment = ethers.keccak256(
-          ethers.AbiCoder.defaultAbiCoder().encode(
-            ['uint256', 'uint256'],
-            [impostorIndex, nonce],
-          ),
-        );
-
-        // Call startGame with the commitment
-        const txStart = await this.contract.startGame(sessionId, commitment);
-        await txStart.wait();
-        this.logger.log(
-          `startGame called for sessionId ${sessionId.toString()}`,
-        );
-
-        this.conversationRunnerService.initializeConversation(impostorIndex);
-
-        // Schedule a timeout to end the game after 10 minutes (600000 ms)
-        setTimeout(async () => {
-          // Abort the conversation
-          this.conversationRunnerService.stopConversation();
-          // Call endGame with the actual reveal values
-          const txEnd = await this.contract.endGame(
-            sessionId,
-            impostorIndex,
-            nonce,
-          );
-          await txEnd.wait();
-          this.logger.log(
-            `endGame called for sessionId ${sessionId.toString()}`,
-          );
-        }, 600_000);
-      } catch (error) {
-        this.logger.error('Error handling AllPlayersJoined event', error);
-      }
+  async getGameSessionIds() {
+    // Fetch the shared GameSessionList object and extract the session IDs
+    const obj = await this.client.getObject({
+      id: this.configService.get<string>('GAME_SESSION_LIST_ID')!,
+      options: { showContent: true },
     });
+
+    const ids: string[] = (
+      (obj.data?.content as any)?.fields?.game_session_ids ?? []
+    ).map((x: any) => (typeof x === 'string' ? x : x.fields?.id || x.id));
+    return ids;
+  }
+
+  async getGameSession(sessionId: string) {
+    const obj = await this.client.getObject({
+      id: sessionId,
+      options: { showContent: true },
+    });
+    return (obj.data?.content as any)?.fields;
+  }
+
+  async startSession(session: any) {
+    const impostorIndex = Math.floor(Math.random() * roles.length);
+
+    const tx = new Transaction();
+    tx.moveCall({
+      package: this.configService.get<string>('PKG_ID'),
+      module: 'game_session',
+      function: 'start',
+      arguments: [
+        tx.object(this.configService.get<string>('ADMIN_CAP_ID')),
+        tx.object(session.id),
+        tx.pure.option('u8', impostorIndex),
+        tx.object.clock(),
+      ],
+    });
+    const result = await this.client.signAndExecuteTransaction({
+      signer: this.signer,
+      transaction: tx,
+    });
+    console.log('✅ tx sent:', result.digest);
+
+    this.conversationRunnerService.initializeConversation(impostorIndex);
+
+    const updatedSession = {
+      ...session,
+      startTime: Date.now(),
+    };
+
+    this.scheduleEndSession(updatedSession);
+  }
+
+  async scheduleEndSession(session: any) {
+    const now = Date.now();
+    const endTime =
+      new Date(parseInt(session.startTime)).getTime() +
+      this.sessionDuration * 1000;
+    const waitTime = Math.max(endTime - now, 0);
+
+    console.log(
+      `🔔 Next trigger in ${Math.ceil(waitTime / 1000)}s (ends @ ${new Date(
+        endTime,
+      ).toLocaleString()})`,
+    );
+    await this.sleep(waitTime);
+
+    // call 'end' with up to 5 retries
+    let attempt = 0;
+    while (true) {
+      try {
+        const tx = new Transaction();
+        tx.moveCall({
+          package: this.configService.get<string>('PKG_ID'),
+          module: 'game_session',
+          function: 'end',
+          arguments: [
+            tx.object(this.configService.get<string>('ADMIN_CAP_ID')),
+            tx.object(session.id),
+            tx.object.clock(),
+          ],
+        });
+        const result = await this.client.signAndExecuteTransaction({
+          signer: this.signer,
+          transaction: tx,
+        });
+        console.log('✅ tx sent:', result.digest);
+
+        this.conversationRunnerService.stopConversation();
+        break;
+      } catch (e) {
+        attempt++;
+        console.warn(`⚠️ trigger attempt #${attempt} failed:`, e);
+        if (attempt >= 5) {
+          console.error(
+            '❌ All trigger retries failed, giving up until next round',
+          );
+          break;
+        }
+        await this.sleep(1_000);
+      }
+    }
+  }
+
+  async handleSession(session: any) {
+    if (!session.started) {
+      await this.startSession(session);
+    } else {
+      await this.scheduleEndSession(session);
+    }
+  }
+
+  async keeperLoop() {
+    while (true) {
+      try {
+        const sessionIds = await this.getGameSessionIds();
+        for (const sessionId of sessionIds) {
+          if (this.managedSessions.has(sessionId)) continue; // Already running for this session
+
+          // Fetch session details
+          const session = await this.getGameSession(sessionId);
+          const sessionData = {
+            id: sessionId,
+            max_players: session.max_players,
+            players: session.players,
+            started: session.started,
+            startTime: session.start_time,
+            ended: session.ended,
+          };
+
+          // Only handle sessions that are not ended
+          if (
+            !sessionData.ended &&
+            sessionData.players.length === sessionData.max_players
+          ) {
+            this.managedSessions.add(sessionId);
+            this.handleSession(sessionData)
+              .catch((e) => {
+                console.error('Error handling session:', e);
+              })
+              .finally(() => {
+                // When finished, remove from managed set
+                this.managedSessions.delete(sessionId);
+              });
+          }
+        }
+      } catch (e) {
+        console.error('💥 Keeper loop error, retrying in 5 s:', e);
+        await this.sleep(3_000);
+      }
+
+      // Poll every 5 seconds
+      await this.sleep(5_000);
+    }
   }
 }

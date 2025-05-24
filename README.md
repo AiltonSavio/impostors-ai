@@ -2,7 +2,7 @@
 
 Impostors AI is a **fully on-chain AI social deduction game** where players must identify the **hidden traitor** among a group of **intelligent AI agents**. These AI agents engage in **real-time discussions and strategy planning**, but one of them is secretly **sabotaging the plans**.
 
-Players analyze the AI-generated conversations and vote to eliminate the **suspected impostor** before time runs out. The game is **completely autonomous**, leveraging **AI agents, blockchain smart contracts, and real-time interactions**.
+Players analyze the AI-generated conversations and vote to eliminate the **suspected impostor** before time runs out. The game is **completely autonomous**, leveraging **AI agents, blockchain smart contracts (Sui Move), and real-time interactions**.
 
 ---
 
@@ -10,101 +10,90 @@ Players analyze the AI-generated conversations and vote to eliminate the **suspe
 
 The project is built using a **modern Web3 and AI tech stack**:
 
-| **Component**     | **Technology**           |
-|-------------------|-------------------------|
-| **Blockchain**    | Foundry + Solidity (Smart Contracts) |
-| **Frontend**      | Next.js + Scaffold-ETH 2 |
-| **Backend**       | NestJS (Handles API & AI Communication) |
-| **AI Agents**     | LangGraph (Manages AI-driven discussions) |
-| **LLM**           | ChatTogetherAI (ollama) |
-| **Storage**       | IPFS-based (via Fileverse) |
+| **Component**  | **Technology**                                 |
+| -------------- | ---------------------------------------------- |
+| **Blockchain** | Sui (Move Smart Contracts)                     |
+| **Frontend**   | Next.js (Monorepo)                             |
+| **Backend**    | NestJS (API, Keeper/Listener, AI integration)  |
+| **AI Agents**  | LangGraph (Orchestrates AI-driven discussions) |
+| **LLM**        | TogetherAI, DeepSeek, or Ollama (local/remote) |
 
 ---
 
 ## 🛠️ Running the Project Locally
 
-Follow these steps to set up and run **Impostors AI** on your local machine.
-
-### 1️⃣ Install Dependencies
-
-Run the following command to install all dependencies:
+**1️⃣ Install Dependencies**
 
 ```sh
 yarn install
 ```
 
-### 2️⃣ **Start the Local Blockchain**
-Run an **Anvil** (Foundry) blockchain instance locally:
+**2️⃣ Build and Publish Sui Move Packages**
 
 ```sh
-yarn chain
+yarn move:build
+yarn move:publish
 ```
 
-### 3️⃣ **Compile the Smart Contracts**
+* This compiles and deploys the Move contracts to your selected Sui network (`localnet`, `devnet`, etc).
 
-Compile the smart contracts using Foundry:
+**3️⃣ Set Up API Environment Variables**
 
-```sh
-yarn foundry:compile
+Navigate to `packages/api/` and create a `.env` file:
+
+```env
+TOGETHERAI_API_KEY=        # Optional (required for TogetherAI)
+SUI_NETWORK=localnet       # or devnet, testnet, mainnet
+PKG_ID=                    # The package ID from Move publish
+GAME_SESSION_LIST_ID=      # The shared GameSessionList object ID
+ADMIN_CAP_ID=              # The AdminCap object ID
+ADMIN_SECRET_KEY=          # The private key that owns AdminCap
 ```
 
-### 4️⃣ **Deploy the Smart Contracts**
-Deploy the smart contract (GameSession) to the local blockchain:
-
-```sh
-yarn foundry:deploy
-```
-
-### 5️⃣ **Set Up the API (.env)**
-Navigate to ``packages/api/`` and create a .env file with the following variables:
-
-```sh
-TOGETHERAI_API_KEY= # Get a free API key from https://api.together.ai/. If running with DeepSeek, you can leave this empty.
-RPC_URL=http://127.0.0.1:8545  # Local Anvil RPC
-PRIVATE_KEY= # Use Anvil’s Account #9 private key
-CONTRACT_ADDRESS= # Use the deployed contract address
-```
-### 6️⃣ **Run the Backend API**
-Go back to the root directory and start the NestJS API:
-
+**4️⃣ Run the Backend API**
 
 ```sh
 yarn start:api
-
 ```
 
-By default, the API will use TogetherAI. If you want to run it locally with DeepSeek (via Ollama), pass the --model=deepseek argument:
+* This starts the NestJS API and session/game keeper logic.
+* You can optionally use `--model=deepseek` to use DeepSeek/Ollama.
 
+**5️⃣ Set Up Frontend Environment Variables**
 
-```sh
-yarn start:api --model=deepseek
+Navigate to `packages/nextjs/` and create a `.env` file:
 
+```env
+NEXT_PUBLIC_SUI_NETWORK=localnet       # or devnet, etc
+NEXT_PUBLIC_GAME_SESSION_LIST_ID=      # The shared GameSessionList object ID
+NEXT_PUBLIC_PKG_ID=                    # The package ID from Move publish
+NEXT_PUBLIC_API_URL=http://localhost:8080   # The API URL
 ```
 
-### 7️⃣ **Set Up the Frontend (.env)**
-Navigate to ``packages/nextjs/`` and create a .env file:
-
-```sh
-NEXT_PUBLIC_API_URL=http://localhost:8080  # Or your custom API PORT
-
-```
-
-### 8️⃣ **Run the Frontend**
-Go back to the root directory and start the Next.js frontend:
+**6️⃣ Start the Frontend**
 
 ```sh
 yarn start
-
 ```
 
-### 9️⃣ **Open the App in Your Browser**
-Visit:
+* This runs the Next.js frontend in development mode.
 
-```sh
-http://localhost:3000
-```
+**7️⃣ Open the App**
 
-🚀 You’re now ready to play Impostors AI locally!
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🧩 Useful Scripts
+
+| Script              | What it Does                          |
+| ------------------- | ------------------------------------- |
+| `yarn move:build`   | Compile Move smart contracts          |
+| `yarn move:publish` | Publish Move contracts to Sui         |
+| `yarn start:api`    | Run backend API & game/session keeper |
+| `yarn start`        | Run Next.js frontend in dev mode      |
+| `yarn next:build`   | Build the frontend for production     |
+| `yarn next:lint`    | Lint the frontend code                |
 
 ---
 
@@ -112,10 +101,10 @@ http://localhost:3000
 
 We welcome contributions! If you’d like to improve Impostors AI, feel free to:
 
- - Fork the repo
- - Create a new branch
- - Submit a pull request
-  
+* Fork the repo
+* Create a new branch
+* Submit a pull request
+
 ---
 
 ## 📜 License
