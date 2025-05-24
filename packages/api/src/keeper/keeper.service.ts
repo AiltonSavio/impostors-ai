@@ -7,7 +7,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 
 @Injectable()
-export class EventListenerService implements OnModuleInit {
+export class KeeperService implements OnModuleInit {
   private readonly network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
   private client: SuiClient;
   private signer: Ed25519Keypair;
@@ -38,7 +38,7 @@ export class EventListenerService implements OnModuleInit {
   async getGameSessionIds() {
     // Fetch the shared GameSessionList object and extract the session IDs
     const obj = await this.client.getObject({
-      id: this.configService.get<string>('GAME_SESSION_LIST_ID')!,
+      id: this.configService.get<string>('GAME_SESSION_LIST_ID'),
       options: { showContent: true },
     });
 

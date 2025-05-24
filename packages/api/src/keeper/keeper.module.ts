@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { EventListenerService } from './event-listener.service';
+import { KeeperService } from './keeper.service';
 import { ConversationModule } from '../conversation/conversation.module';
 
 @Module({
   imports: [ConfigModule, ConversationModule],
-  providers: [EventListenerService],
-  exports: [EventListenerService],
+  providers: [KeeperService],
+  exports: [KeeperService],
 })
-export class EventListenerModule {}
+export class KeeperModule {}
