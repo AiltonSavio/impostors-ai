@@ -67,7 +67,7 @@ Navigate to `packages/nextjs/` and create a `.env` file:
 NEXT_PUBLIC_SUI_NETWORK=localnet       # or devnet, etc
 NEXT_PUBLIC_GAME_SESSION_LIST_ID=      # The shared GameSessionList object ID
 NEXT_PUBLIC_PKG_ID=                    # The package ID from Move publish
-NEXT_PUBLIC_API_URL=http://localhost:8080   # The API URL
+API_URL=http://localhost:8080          # The API URL
 ```
 
 **6️⃣ Start the Frontend**

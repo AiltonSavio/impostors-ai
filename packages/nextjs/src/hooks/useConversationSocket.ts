@@ -10,7 +10,7 @@ export interface Message {
 export default function useConversationSocket() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [eliminatedAgents, setEliminatedAgents] = useState<string[]>([]);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = process.env.API_URL;
 
   useEffect(() => {
     // Fetch initial messages from the REST API.
