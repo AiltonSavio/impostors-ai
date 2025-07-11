@@ -25,7 +25,7 @@ export class ConversationController {
       this.runner.stopConversation();
 
       this.logger.log(`Connversation ended`);
-    }, 120_000);
+    }, 120_000); // 2 minutes for testing purposes
   }
 
   @Get('latest-message')

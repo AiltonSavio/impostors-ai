@@ -101,11 +101,16 @@ const Home: NextPage = () => {
           {/* Latest Session Display */}
           {latestSessionData && latestSessionData[0] && (
             <PixelFrame width="w-[320px] sm:w-[444px]" height="h-[272px] sm:h-[377px]">
-              <h2 className="text-5xl font-bold mb-2 text-[#ccb16f]">{latestSessionData[0]}</h2>
+              <h2 className="text-5xl text-center font-bold mb-2 text-[#ccb16f]">{latestSessionData[0]}</h2>
               <p className="my-2">
-                Players: {latestSessionData[5].length}/{Number(latestSessionData[1])}
+                Players:{" "}
+                <span className="font-numbers">
+                  {latestSessionData[5].length}/{Number(latestSessionData[1])}
+                </span>
               </p>
-              <p className="mb-4">Price: {Number(formatEther(latestSessionData[2]))} ETH</p>
+              <p>
+                Price: <span className="font-numbers">{Number(formatEther(latestSessionData[2]))}</span> ETH
+              </p>
               <div className="flex flex-col items-center space-y-3">
                 <button
                   className={`pixel-button bg-primary text-black ${latestSessionData[3] ? "opacity-30" : ""}`}
@@ -130,33 +135,38 @@ const Home: NextPage = () => {
             <h2 className="text-2xl font-bold mb-4 text-center">Create New Game</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-left font-medium">Session Name</label>
+                <label className="block text-left font-medium">Session Name (max 20 characters)</label>
                 <input
                   type="text"
                   value={sessionName}
                   onChange={e => setSessionName(e.target.value)}
                   className="input input-bordered w-full"
                   placeholder="Enter session name"
+                  maxLength={20}
                 />
               </div>
               <div>
-                <label className="block text-left font-medium">Price to Join (in ETH, 0.005 ETH minimum)</label>
+                <label className="block text-left font-medium">
+                  Price to Join (<span className="font-numbers">0.005</span> ETH minimum)
+                </label>
                 <input
                   type="number"
                   value={priceToJoin}
                   onChange={e => setPriceToJoin(Number(e.target.value))}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full font-numbers"
                   placeholder="e.g. 0.1"
                   min={0.005}
                 />
               </div>
               <div>
-                <label className="block text-left font-medium">Max Players (2-5)</label>
+                <label className="block text-left font-medium">
+                  Max Players <span className="font-numbers">(2-5)</span>
+                </label>
                 <input
                   type="number"
                   value={maxPlayers}
                   onChange={e => setMaxPlayers(Number(e.target.value))}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full font-numbers"
                   min={2}
                   max={5}
                 />

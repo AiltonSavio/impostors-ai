@@ -22,7 +22,7 @@ import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 export class GraphService {
   private readonly logger = new Logger(GraphService.name);
   private model: ChatOllama | ChatTogetherAI;
-  private activeAgents: string[] = [];
+  private agents: string[] = [];
   private eliminatedAgents: string[] = [];
   private impostorIndex: number;
   private lastSelectedTimes: Partial<Record<AgentName, number>> = {};
@@ -61,22 +61,19 @@ export class GraphService {
   /**
    * Calls the LLM with structured output so that it returns a natural language response along with a target node.
    * @param messages - the conversation messages
-   * @param targetAgentNodes - list of valid target nodes
    */
   async callLlm(messages: BaseMessage[]) {
     // Generate a random delay between 10 and 20 seconds
     const delay = Math.floor(Math.random() * (20_000 - 10_000 + 1)) + 10_000;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
     const response = await this.model.invoke(messages);
     const textResponse = response.content.toString().trim();
     return textResponse;
   }
 
   /**
-   * Creates an agent node function for the war council based on the agent's personality and role.
-   * The target agents are determined by calling conversationRunnerService.getActiveAgents(),
-   * filtering out the current agent.
+   * Creates an agent node function for the war council based on the agent's personality and role filtering out the current agent.
    */
   async createAgentNode(role: AgentRole) {
     return async (state: typeof MessagesAnnotation.State) => {
@@ -87,13 +84,14 @@ export class GraphService {
 
       // Dynamically include references to other active agents
       const otherHelp = roles
-        .filter((r) => r.name !== role.name && this.activeAgents.includes(r.name))
+        .filter((r) => r.name !== role.name && this.agents.includes(r.name))
         .map((r) => r.help)
         .join(' ');
       systemPrompt += otherHelp + ' ';
 
       // Add role-specific constraints
-      systemPrompt += 'Keep your answer clear, concise, and final (no more than 50 words).';
+      systemPrompt +=
+        'Keep your answer clear, concise, and final (no more than 40 words).';
 
       const messages = [
         { role: 'system', content: systemPrompt },
@@ -118,7 +116,7 @@ export class GraphService {
 
   async createGameGraph(impostorIndex: number) {
     const agentNames = getAgentNames();
-    this.activeAgents = agentNames;
+    this.agents = agentNames;
 
     const graph = new StateGraph(MessagesAnnotation) as StateGraph<
       typeof MessagesAnnotation,
@@ -153,9 +151,11 @@ export class GraphService {
   // Helper function to select a goto agent.
   // compute weights based on how long it has been since an agent was last selected.
   selectGotoAgent(currentAgent: AgentName): string {
-    const filteredAllowed = this.activeAgents.filter(
-      (agent) => agent !== currentAgent,
-    );
+    const eligibleIndexes = this.eligibleAgentsIndexes();
+
+    const filteredAllowed = eligibleIndexes
+      .map((index) => this.agents[index])
+      .filter((agent) => agent !== currentAgent);
 
     const now = Date.now();
     // Compute weights: weight = (now - lastSelectedTime + 1)
@@ -183,28 +183,37 @@ export class GraphService {
   }
 
   eliminateAgent() {
+    const eligibleIndexes = this.eligibleAgentsIndexes();
+    const impostorIndex = this.impostorIndex;
+
     // Filter out the impostor agent
-    const eligibleAgents = this.activeAgents.filter((_, index) => index !== this.impostorIndex);
-    
-    // Ensure there are agents left to eliminate
-    if (eligibleAgents.length === 0) {
-      this.logger.log("No eligible agents to eliminate.");
+    const filteredEligibleIndexes = eligibleIndexes.filter(
+      (index) => index !== impostorIndex,
+    );
+
+    if (filteredEligibleIndexes.length === 0) {
+      this.logger.log('No eligible agents to eliminate.');
       return null;
     }
-  
-    // Randomly pick an agent from the filtered list
-    const randomIndex = Math.floor(Math.random() * eligibleAgents.length);
-    const eliminatedAgent = eligibleAgents[randomIndex];
-    this.eliminatedAgents.push(eliminatedAgent);
 
-    // Find the actual index in the activeAgents array
-    const actualIndex = this.activeAgents.indexOf(eliminatedAgent);
-    
-    // Remove eliminated agent from activeAgents
-    this.activeAgents.splice(actualIndex, 1);
+    // Pick a random index
+    const randomIndex =
+      filteredEligibleIndexes[
+        Math.floor(Math.random() * filteredEligibleIndexes.length)
+      ];
+    const eliminatedAgent = this.agents[randomIndex];
+
+    this.eliminatedAgents.push(eliminatedAgent);
     this.logger.log(`Agent eliminated: ${eliminatedAgent}`);
-  
+
     return eliminatedAgent;
+  }
+
+  // Returns a list of indexes of agents that are not eliminated.
+  eligibleAgentsIndexes(): number[] {
+    return this.agents
+      .map((agent, index) => index)
+      .filter((index) => !this.eliminatedAgents.includes(this.agents[index]));
   }
 
   /**
@@ -229,7 +238,7 @@ export class GraphService {
   }
 
   clear() {
-    this.activeAgents = [];
+    this.agents = [];
     this.eliminatedAgents = [];
     this.graph = undefined;
   }

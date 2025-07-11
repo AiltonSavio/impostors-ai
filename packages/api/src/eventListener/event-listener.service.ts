@@ -16,7 +16,6 @@ export class EventListenerService implements OnModuleInit {
     private readonly conversationRunnerService: ConversationRunnerService,
     private readonly configService: ConfigService,
   ) {
-    // Initialize provider and signer using env variables (set RPC_URL, PRIVATE_KEY, CONTRACT_ADDRESS in your .env)
     const rpcUrl = this.configService.get<string>('RPC_URL');
     this.provider = new ethers.JsonRpcProvider(rpcUrl);
 
@@ -33,54 +32,75 @@ export class EventListenerService implements OnModuleInit {
 
   onModuleInit() {
     this.listenToEvents();
+    this.startPendingSessionChecker();
   }
 
   listenToEvents() {
-    // Listen to the AllPlayersJoined event. (Assume the event signature is exactly as in your contract.)
     this.contract.on('AllPlayersJoined', async (sessionId, event) => {
       this.logger.log(
         `AllPlayersJoined event detected for sessionId: ${sessionId.toString()}`,
       );
-      try {
-        const impostorIndex = Math.floor(Math.random() * roles.length);
-        this.logger.log(`selected impostor: ${roles[impostorIndex].name}`);
-        const nonce = Math.floor(Math.random() * 100_000_000);
-
-        // Compute the commitment hash using ethers:
-        const commitment = ethers.keccak256(
-          ethers.AbiCoder.defaultAbiCoder().encode(
-            ['uint256', 'uint256'],
-            [impostorIndex, nonce],
-          ),
-        );
-
-        // Call startGame with the commitment
-        const txStart = await this.contract.startGame(sessionId, commitment);
-        await txStart.wait();
-        this.logger.log(
-          `startGame called for sessionId ${sessionId.toString()}`,
-        );
-
-        this.conversationRunnerService.initializeConversation(impostorIndex);
-
-        // Schedule a timeout to end the game after 10 minutes (600000 ms)
-        setTimeout(async () => {
-          // Abort the conversation
-          this.conversationRunnerService.stopConversation();
-          // Call endGame with the actual reveal values
-          const txEnd = await this.contract.endGame(
-            sessionId,
-            impostorIndex,
-            nonce,
-          );
-          await txEnd.wait();
-          this.logger.log(
-            `endGame called for sessionId ${sessionId.toString()}`,
-          );
-        }, 600_000);
-      } catch (error) {
-        this.logger.error('Error handling AllPlayersJoined event', error);
-      }
+      await this.handleSessionStart(sessionId);
     });
+  }
+
+  async handleSessionStart(sessionId: number) {
+    try {
+      const impostorIndex = Math.floor(Math.random() * roles.length);
+      this.logger.log(`Selected impostor: ${roles[impostorIndex].name}`);
+      const nonce = Math.floor(Math.random() * 100_000_000);
+
+      const commitment = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['uint256', 'uint256'],
+          [impostorIndex, nonce],
+        ),
+      );
+
+      const txStart = await this.contract.startGame(sessionId, commitment);
+      await txStart.wait();
+      this.logger.log(`startGame called for sessionId ${sessionId.toString()}`);
+
+      this.conversationRunnerService.initializeConversation(impostorIndex);
+
+      setTimeout(async () => {
+        this.conversationRunnerService.stopConversation();
+        const txEnd = await this.contract.endGame(
+          sessionId,
+          impostorIndex,
+          nonce,
+        );
+        await txEnd.wait();
+        this.logger.log(`endGame called for sessionId ${sessionId.toString()}`);
+      }, 600_000);
+    } catch (error) {
+      this.logger.error(`Error starting session ${sessionId}:`, error);
+    }
+  }
+
+  startPendingSessionChecker() {
+    this.logger.log('Starting periodic checker for pending sessions...');
+    setInterval(async () => {
+      try {
+        const sessionCounter: bigint = await this.contract.sessionCounter();
+        const latestSessionId = sessionCounter.toString();
+
+        const session = await this.contract.getGameSession(latestSessionId);
+
+        const started = session.started;
+        const ended = session.ended;
+        const players = session.players;
+        const maxPlayers = Number(session.maxPlayers);
+
+        if (!started && !ended && players.length === maxPlayers) {
+          this.logger.warn(
+            `Session ${latestSessionId} has enough players but was not started. Starting now...`,
+          );
+          await this.handleSessionStart(Number(latestSessionId));
+        }
+      } catch (error) {
+        this.logger.error('Error checking for pending sessions', error);
+      }
+    }, 10_000); // Check every 10 seconds
   }
 }

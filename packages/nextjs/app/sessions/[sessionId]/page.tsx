@@ -30,6 +30,13 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 mins in seconds
+
+  function formatTimeLeft(seconds: number) {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+  }
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -97,6 +104,30 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   const { messages, eliminatedAgents } = useConversationSocket();
 
+  const sessionName = latestSessionData?.[0] ?? "";
+  const maxPlayers = Number(latestSessionData?.[1] ?? 0);
+  const priceToJoin = latestSessionData?.[2] ? Number(formatEther(latestSessionData[2])) : 0;
+  const sessionStarted = latestSessionData?.[3] ?? false;
+  const sessionEnded = latestSessionData?.[4] ?? false;
+  const players: readonly string[] = latestSessionData?.[5] ?? [];
+  const prizePool = latestSessionData?.[7] ? formatEther(latestSessionData[7]) : "0";
+  const startTimestamp = latestSessionData?.[8] ? Number(latestSessionData[8]) * 1000 : null;
+
+  useEffect(() => {
+    const startTime = startTimestamp ? new Date(startTimestamp) : null;
+
+    if (!sessionStarted || !startTime) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime.getTime()) / 1000);
+      const remaining = Math.max(0, 600 - elapsed);
+      setTimeLeft(remaining);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionStarted, startTimestamp]);
+
   if (!latestSessionData || !latestSessionData[0] || isLoadingLatestSession) {
     return (
       <>
@@ -114,14 +145,6 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       </>
     );
   }
-
-  const sessionName = latestSessionData[0];
-  const maxPlayers = Number(latestSessionData[1]);
-  const priceToJoin = Number(formatEther(latestSessionData[2]));
-  const sessionStarted = latestSessionData[3];
-  const sessionEnded = latestSessionData[4];
-  const players: readonly string[] = latestSessionData[5];
-  const prizePool = formatEther(latestSessionData[7]);
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -167,7 +190,12 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       {/* Content Area */}
       <div className="flex-1 flex flex-col justify-center items-center p-8">
         <div className="bg-base-200 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
-          <h1 className="dark:text-white text-2xl font-bold mb-4">{sessionName} Chat</h1>
+          <h1 className="dark:text-white text-2xl font-bold">{sessionName} Chat</h1>
+          {sessionStarted && (
+            <div className="my-2 text-lg font-bold text-primary">
+              Time left: <span className="font-numbers">{formatTimeLeft(timeLeft)}</span>
+            </div>
+          )}
           {!sessionStarted ? (
             <>
               <p className="text-lg font-semibold text-yellow-500">This session was created but was not started yet.</p>

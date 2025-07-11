@@ -49,8 +49,9 @@ export const theme = {
       "pulse-fast": "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
     },
     fontFamily: {
-      sans: ['"Lexend Deca"', ..._fontFamily.sans],
       pixel: ['"Pixelify Sans"', "monospace"],
+      numbers: ['"Jersey 10"', "monospace"],
+      sans: ['"Lexend Deca"', ..._fontFamily.sans],
     },
     colors: {
       pixelGold: {
