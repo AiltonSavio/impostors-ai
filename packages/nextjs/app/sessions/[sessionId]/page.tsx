@@ -191,7 +191,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       <div className="flex-1 flex flex-col justify-center items-center p-8">
         <div className="bg-base-200 rounded-lg p-6 m-4 min-w-full min-h-full max-h-full">
           <h1 className="dark:text-white text-2xl font-bold">{sessionName} Chat</h1>
-          {sessionStarted && (
+          {sessionStarted && !sessionEnded && (
             <div className="my-2 text-lg font-bold text-primary">
               Time left: <span className="font-numbers">{formatTimeLeft(timeLeft)}</span>
             </div>
